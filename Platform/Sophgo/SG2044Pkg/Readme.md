@@ -1,7 +1,7 @@
 Introduction to Sophgo SG2044 Platform
 ============================================
 
-This document provides guidelines for building UEFI firmware for Sophgo SG2042. Sophgo SG2042 is a 64 and processor of RISC-V architecture. Sophgo SG2042 UEFI can currently use Opensbi+UEFI firmware+GRUB to successfully enter the Linux distribution.
+This document provides guidelines for building UEFI firmware for Sophgo SG2044. Sophgo SG2044 is a 64 and processor of RISC-V architecture. Sophgo SG2044 UEFI can currently use Opensbi+UEFI firmware+GRUB to successfully enter the Linux distribution.
 
 ## How To Build (X86 Linux Environment)
 
