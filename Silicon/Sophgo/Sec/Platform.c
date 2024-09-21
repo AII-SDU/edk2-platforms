@@ -148,6 +148,7 @@ PlatformPeimInitialization (
   // Add SDHI resource
   //
   PopulateIoResources (Base, "bitmain,bm-sd");
+  PopulateIoResources (Base, "sophgo,sg-sd");
 
   //
   // Add SPI Flash Master Controller resource
