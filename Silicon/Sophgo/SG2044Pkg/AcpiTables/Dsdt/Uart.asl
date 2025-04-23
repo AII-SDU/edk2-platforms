@@ -10,12 +10,10 @@
 
 Scope(_SB)
 {
-  // DesignWare FUART
+  // DesignWare UART
   Device(URT0) {
-    Name(_HID, "SGPH0003")              // _HID: Hardware ID
-    Name(_CID, "HISI0032")              // _CID: Compatible ID
+    Name(_HID, "SOPH0002")              // _HID: Hardware ID
     Name(_UID, 0)
-    Name(_CCA, 1)                       // _CCA: Cache Coherency Attribute
     Name(_DSD, Package () {
       ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
       Package () {
@@ -42,4 +40,3 @@ Scope(_SB)
     }
   }
 }
-
