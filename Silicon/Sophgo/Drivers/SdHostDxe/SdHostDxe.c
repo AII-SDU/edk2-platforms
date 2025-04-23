@@ -446,6 +446,7 @@ SdHostInitialize (
                                      &Node
                                      ))
   {
+    DEBUG ((DEBUG_MMCHOST_SD_INFO, "SdHost: SG2044 GetNodeProperty\n"));
     Status = FdtClient->GetNodeProperty (
                       FdtClient,
                       Node,
@@ -463,6 +464,42 @@ SdHostInitialize (
       continue;
     } else {
       break;
+    }
+  }
+
+  if (EFI_ERROR (FindNodeStatus)) {
+    DEBUG ((DEBUG_MMCHOST_SD_INFO, "SdHost: SG2042 GetNodeProperty\n"));
+    for (FindNodeStatus = FdtClient->FindCompatibleNode (
+                                     FdtClient,
+                                     "bitmain,bm-sd",
+                                     &Node
+                                     );
+       !EFI_ERROR (FindNodeStatus);
+       FindNodeStatus = FdtClient->FindNextCompatibleNode (
+                                     FdtClient,
+                                     "bitmain,bm-sd",
+                                     Node,
+                                     &Node
+                                     ))
+    {
+      Status = FdtClient->GetNodeProperty (
+                      FdtClient,
+                      Node,
+                      "no-mmc",
+                      (CONST VOID **)&TempProp,
+                      &TempSize
+                      );
+      if (EFI_ERROR (Status)) {
+        DEBUG ((
+          DEBUG_MMCHOST_SD,
+          "%a: GetNodeProperty () failed (Status == %r)\n",
+          __func__,
+          Status
+          ));
+        continue;
+      } else {
+        break;
+      }
     }
   }
 

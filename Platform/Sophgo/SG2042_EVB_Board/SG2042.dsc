@@ -47,6 +47,17 @@
   GCC:*_*_RISCV64_GENFW_FLAGS    = --keepexceptiontable
 !endif
 
+#
+ # Force PE/COFF sections to be aligned at 4KB boundaries to support page level protection
+ #
+ [BuildOptions.common.EDKII.DXE_CORE,BuildOptions.common.EDKII.DXE_DRIVER,BuildOptions.common.EDKII.UEFI_DRIVER,BuildOptions.common.EDKII.UEFI_APPLICATION]
+   GCC:*_*_*_DLINK_FLAGS = -z common-page-size=0x1000
+   MSFT: *_*_*_DLINK_FLAGS = /ALIGN:4096
+
+ [BuildOptions.common.EDKII.DXE_RUNTIME_DRIVER]
+   GCC:  *_*_*_DLINK_FLAGS = -z common-page-size=0x1000
+   MSFT: *_*_*_DLINK_FLAGS = /ALIGN:4096
+
 ################################################################################
 #
 # SKU Identification section - list of all SKU IDs supported by this Platform.
@@ -99,6 +110,7 @@
   SortLib|MdeModulePkg/Library/BaseSortLib/BaseSortLib.inf
   ShellLib|ShellPkg/Library/UefiShellLib/UefiShellLib.inf
   UefiBootManagerLib|MdeModulePkg/Library/UefiBootManagerLib/UefiBootManagerLib.inf
+  BootLogoLib|MdeModulePkg/Library/BootLogoLib/BootLogoLib.inf
   FdtLib|EmbeddedPkg/Library/FdtLib/FdtLib.inf
   VariableFlashInfoLib|MdeModulePkg/Library/BaseVariableFlashInfoLib/BaseVariableFlashInfoLib.inf
   VariablePolicyHelperLib|MdeModulePkg/Library/VariablePolicyHelperLib/VariablePolicyHelperLib.inf
@@ -154,6 +166,9 @@
 
   # Flattened Device Tree (FDT) access library
   FdtLib|EmbeddedPkg/Library/FdtLib/FdtLib.inf
+
+  # Nor Flash Library
+  NorFlashInfoLib|EmbeddedPkg/Library/NorFlashInfoLib/NorFlashInfoLib.inf
 
 [LibraryClasses.common.SEC]
 !ifdef $(DEBUG_ON_SERIAL_PORT)
@@ -236,7 +251,7 @@
   DebugAgentLib|SourceLevelDebugPkg/Library/DebugAgent/DxeDebugAgentLib.inf
 !endif
   UefiBootManagerLib|MdeModulePkg/Library/UefiBootManagerLib/UefiBootManagerLib.inf
-  PlatformBootManagerLib|Platform/RISC-V/PlatformPkg/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf
+  PlatformBootManagerLib|Silicon/Sophgo/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf
   PlatformMemoryTestLib|Platform/RISC-V/PlatformPkg/Library/PlatformMemoryTestLibNull/PlatformMemoryTestLibNull.inf
   PlatformUpdateProgressLib|Platform/RISC-V/PlatformPkg/Library/PlatformUpdateProgressLibNull/PlatformUpdateProgressLibNull.inf
 
@@ -338,6 +353,14 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdDxeNxMemoryProtectionPolicy|0xC000000000007FD5
 
   #
+  # Sv39 implementation provides a 48-bit virtual address space
+  # using 40-bits of physical address space.
+  # The max physical address is 0x7FFFFFFFFF in the SoC System map.
+  #
+  gEmbeddedTokenSpaceGuid.PcdPrePiCpuMemorySize|40
+  gEmbeddedTokenSpaceGuid.PcdPrePiCpuIoSize|39
+
+  #
   # Control the maximum SATP mode that MMU allowed to use.
   # 0 - Bare mode.
   # 8 - 39bit mode.
@@ -345,6 +368,22 @@
   # 10 - 57bit mode.
   #
   gUefiCpuPkgTokenSpaceGuid.PcdCpuRiscVMmuMaxSatpMode|0
+
+  #
+  # Variable store - default values
+  # 64KB + 64KB + 64KB
+  # Flash Offset: 32MB
+  #
+  gSophgoTokenSpaceGuid.PcdFlashVariableOffset|0x02780000
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableSize|0x00010000
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingSize|0x00010000
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareSize|0x00010000
+
+[PcdsFixedAtBuild.common]
+  gSophgoTokenSpaceGuid.PcdSDIOSourceClockFrequency|100000000
+  gSophgoTokenSpaceGuid.PcdSDIOTransmissionClockFrequency|50000000
+  gSophgoTokenSpaceGuid.PcdSPIFMC0Base|0x7000180000
+  gSophgoTokenSpaceGuid.PcdSPIFMC1Base|0x7002180000
 
 ################################################################################
 #
@@ -354,9 +393,9 @@
 
 [PcdsDynamicDefault]
   gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvStoreReserved|0
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase64|0
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingBase|0
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase|0
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase64|0x02780000
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingBase64|0x02790000
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase64|0x027A0000
   gEfiMdeModulePkgTokenSpaceGuid.PcdPciDisableBusEnumeration|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdVideoHorizontalResolution|800
   gEfiMdeModulePkgTokenSpaceGuid.PcdVideoVerticalResolution|600
@@ -383,7 +422,7 @@
   #
   # SEC Phase modules
   #
-  Silicon/Sophgo/SG2042Pkg/Sec/SecMain.inf  {
+  Silicon/Sophgo/Sec/SecMain.inf  {
     <LibraryClasses>
       ExtractGuidedSectionLib|EmbeddedPkg/Library/PrePiExtractGuidedSectionLib/PrePiExtractGuidedSectionLib.inf
       LzmaDecompressLib|MdeModulePkg/Library/LzmaCustomDecompressLib/LzmaCustomDecompressLib.inf
@@ -443,12 +482,11 @@
   #
   # RISC-V Platform module
   #
-  Platform/SiFive/U5SeriesPkg/Universal/Dxe/RamFvbServicesRuntimeDxe/FvbServicesRuntimeDxe.inf {
-    <LibraryClasses>
-      SerialPortLib|Silicon/Hisilicon/Library/Dw8250SerialPortLib/Dw8250SerialPortLib.inf
-  }
-  Silicon/Sophgo/SG2042Pkg/Drivers/MmcDxe/MmcDxe.inf
-  Silicon/Sophgo/SG2042Pkg/Drivers/SdHostDxe/SdHostDxe.inf
+  Silicon/Sophgo/Drivers/SpiDxe/SpiFlashMasterController.inf
+  Silicon/Sophgo/Drivers/NorFlashDxe/NorFlashDxe.inf
+  Silicon/Sophgo/Drivers/FlashFvbDxe/FlashFvbDxe.inf
+  Silicon/Sophgo/Drivers/MmcDxe/MmcDxe.inf
+  Silicon/Sophgo/Drivers/SdHostDxe/SdHostDxe.inf
 
   #
   # RISC-V Core module
