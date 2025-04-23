@@ -1,6 +1,6 @@
 ## @file
 #  ACPI table data and ASL sources required to boot the platform.
-#  
+#
 #  Copyright (c) 2024, SOPHGO Inc. All rights reserved.
 #  Copyright (c) 2020 - 2022, Arm Limited. All rights reserved.
 #
@@ -32,4 +32,5 @@
 
 [FixedPcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase
-  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialClockRate
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialBaudRate

@@ -1,6 +1,6 @@
 /** @file
 *
-*  Copyright (c) 2024, SOPHGO Inc. All rights reserved.
+*  Copyright (c) 2024, Sophgo Technologies Ltd. All rights reserved.
 *  Copyright (c) 2018 - 2022, Arm Limited. All rights reserved.
 *
 *  SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -18,8 +18,8 @@
 #define EFI_ACPI_RISCV_OEM_ID           'S','O','P','H','G','O'
 #define EFI_ACPI_RISCV_OEM_TABLE_ID     SIGNATURE_64 ('2','0','4','4',' ',' ',' ',' ')
 #define EFI_ACPI_RISCV_OEM_REVISION     0x01
-#define EFI_ACPI_RISCV_CREATOR_ID       SIGNATURE_32('2','0','4','4')
-#define EFI_ACPI_RISCV_CREATOR_REVISION 0x00000099
+#define EFI_ACPI_RISCV_CREATOR_ID       SIGNATURE_32('S','O','P','H')
+#define EFI_ACPI_RISCV_CREATOR_REVISION 0x20241212
 
 // A macro to initialise the common header part of EFI ACPI tables as defined by
 // EFI_ACPI_DESCRIPTION_HEADER structure.
@@ -35,7 +35,7 @@
     EFI_ACPI_RISCV_CREATOR_REVISION   /* UINT32  CreatorRevision */ \
   }
 
-#define CORE_COUNT      64
+#define CORE_COUNT      4
 #define CLUSTER_COUNT   16
 
 // ACPI OSC Status bits
@@ -56,6 +56,39 @@
 #define OSC_CAP_PLAT_COORDINATED_LPI  (1U << 7)
 #define OSC_CAP_OS_INITIATED_LPI      (1U << 8)
 
+///
+/// Sophgo Serial Port Console Redirection Table Format Revision 4
+///
+#pragma pack(1)
+typedef struct {
+  EFI_ACPI_DESCRIPTION_HEADER               Header;
+  UINT8                                     InterfaceType;
+  UINT8                                     Reserved1[3];
+  EFI_ACPI_5_0_GENERIC_ADDRESS_STRUCTURE    BaseAddress;
+  UINT8                                     InterruptType;
+  UINT8                                     Irq;
+  UINT32                                    GlobalSystemInterrupt;
+  UINT8                                     BaudRate;
+  UINT8                                     Parity;
+  UINT8                                     StopBits;
+  UINT8                                     FlowControl;
+  UINT8                                     TerminalType;
+  UINT8                                     Reserved2;
+  UINT16                                    PciDeviceId;
+  UINT16                                    PciVendorId;
+  UINT8                                     PciBusNumber;
+  UINT8                                     PciDeviceNumber;
+  UINT8                                     PciFunctionNumber;
+  UINT32                                    PciFlags;
+  UINT8                                     PciSegment;
+  UINT32                                    UartClockFrequency;
+  UINT32                                    PreciseBaudRate;
+  UINT16                                    NameSpaceStrLength;
+  UINT16                                    NameSpaceStrOffset;
+  CHAR8                                     NameSpaceString[16];
+} EFI_ACPI_4_0_SERIAL_PORT_CONSOLE_REDIRECTION_SOPHGO_TABLE;
+#pragma pack(0)
+
 //
 // "RHCT" RISC-V Hart Capabilities Table
 //
@@ -64,7 +97,7 @@
 // RHCT Revision (as defined in ACPI 6.5 spec.)
 //
 #define EFI_ACPI_6_6_RISCV_HART_CAPABILITIES_TABLE_REVISION  0x01
-
+#define MAX_ISA_LENGTH 256
 //
 // RISC-V Hart Capabilities Table header definition.  The rest of the table
 // must be defined in a platform specific manner.
@@ -83,7 +116,7 @@ typedef struct {
   UINT16     Length;
   UINT16     Revision;
   UINT16     ISALen;
-  CHAR8      ISAStr[12];
+  CHAR8      ISAStr[MAX_ISA_LENGTH];
 } EFI_ACPI_6_6_ISA_STRING_NODE_STRUCTURE;
 
 // CMO node structure
@@ -140,9 +173,18 @@ typedef enum {
   L1DataCache = 1,
   L1InstructionCache,
   L2Cache,
+  L3Cache,
 } TH_PPTT_CACHE_TYPE;
 
 #pragma pack(1)
+
+// PPTT processor Package structure
+typedef struct {
+  EFI_ACPI_6_5_PPTT_STRUCTURE_PROCESSOR  RootPackage;
+  UINT32                                 ResourceOffset;
+  EFI_ACPI_6_5_PPTT_STRUCTURE_CACHE      L3Cache;
+} TH_PPTT_PACKAGE;
+
 // PPTT processor core structure
 typedef struct {
   EFI_ACPI_6_5_PPTT_STRUCTURE_PROCESSOR  Core;
@@ -175,16 +217,6 @@ typedef struct {
     EFI_ACPI_6_5_PPTT_IMPLEMENTATION_IDENTICAL                                 \
   }
 
-// Processor structure flags for cluster
-#define PPTT_PROCESSOR_CLUSTER_FLAGS                                           \
-  {                                                                            \
-    EFI_ACPI_6_5_PPTT_PACKAGE_NOT_PHYSICAL,                                    \
-    EFI_ACPI_6_5_PPTT_PROCESSOR_ID_VALID,                                      \
-    EFI_ACPI_6_5_PPTT_PROCESSOR_IS_NOT_THREAD,                                 \
-    EFI_ACPI_6_5_PPTT_NODE_IS_NOT_LEAF,                                        \
-    EFI_ACPI_6_5_PPTT_IMPLEMENTATION_IDENTICAL                                 \
-  }
-
 // Processor structure flags for cluster with multi-thread core
 #define PPTT_PROCESSOR_CLUSTER_THREADED_FLAGS                                  \
   {                                                                            \
@@ -201,25 +233,6 @@ typedef struct {
     EFI_ACPI_6_5_PPTT_PACKAGE_NOT_PHYSICAL,                                    \
     EFI_ACPI_6_5_PPTT_PROCESSOR_ID_VALID,                                      \
     EFI_ACPI_6_5_PPTT_PROCESSOR_IS_NOT_THREAD,                                 \
-    EFI_ACPI_6_5_PPTT_NODE_IS_LEAF                                             \
-  }
-
-// Processor structure flags for multi-thread core
-#define PPTT_PROCESSOR_CORE_THREADED_FLAGS                                     \
-  {                                                                            \
-    EFI_ACPI_6_5_PPTT_PACKAGE_NOT_PHYSICAL,                                    \
-    EFI_ACPI_6_5_PPTT_PROCESSOR_ID_INVALID,                                    \
-    EFI_ACPI_6_5_PPTT_PROCESSOR_IS_NOT_THREAD,                                 \
-    EFI_ACPI_6_5_PPTT_NODE_IS_NOT_LEAF,                                        \
-    EFI_ACPI_6_5_PPTT_IMPLEMENTATION_IDENTICAL                                 \
-  }
-
-// Processor structure flags for CPU thread
-#define PPTT_PROCESSOR_THREAD_FLAGS                                            \
-  {                                                                            \
-    EFI_ACPI_6_5_PPTT_PACKAGE_NOT_PHYSICAL,                                    \
-    EFI_ACPI_6_5_PPTT_PROCESSOR_ID_VALID,                                      \
-    EFI_ACPI_6_5_PPTT_PROCESSOR_IS_THREAD,                                     \
     EFI_ACPI_6_5_PPTT_NODE_IS_LEAF                                             \
   }
 
@@ -300,6 +313,7 @@ typedef struct {
 } EFI_ACPI_6_6_RINTC_STRUCTURE;
 
 #define ACPI_BUILD_INTC_ID(socket, index) ((socket << 24) | (index))
+#define ACPI_BUILD_IMSIC_BASE(base, index) (base + index * 0x4)
 
 // EFI_ACPI_6_6_RINTC_STRUCTURE
 #define EFI_ACPI_6_6_RINTC_STRUCTURE_INIT(Flags, HartId, AcpiCpuUid,               \
@@ -337,7 +351,7 @@ typedef struct {
 #define EFI_ACPI_6_6_PLIC_STRUCTURE_INIT(PlicId, HwId, TotalExtIntSrcsSup,     \
   MaxPriority, PLICSize, PLICBase, SystemVectorBase) {                         \
     0x1B,                                 /* Type */                           \
-    sizeof (EFI_ACPI_6_6_PLIC_STRUCTURE),                                      \
+    sizeof (EFI_ACPI_6_6_PLIC_STRUCTURE), /* Length */                         \
     1,                                    /* Version */                        \
     PlicId,                               /* PlicId */                         \
     {0, 0, 0, 0, 0, 0, 0, HwId},          /* Hardware ID */                    \
@@ -347,6 +361,39 @@ typedef struct {
     PLICSize,                             /* PLIC Size */                      \
     PLICBase,                             /* PLIC Address */                   \
     SystemVectorBase                      /* Global System Interrupt Vector Base */         \
+  }
+
+//
+// IMSIC Structure
+//
+typedef struct {
+  UINT8     Type;
+  UINT8     Length;
+  UINT8     Version;
+  UINT8     Reserved;
+  UINT32    Flags;
+  UINT16    NumId;
+  UINT16    NumGuestId;
+  UINT8     GuestIndexBits;
+  UINT8     HartIndexBits;
+  UINT8     GroupIndexBits;
+  UINT8     GroupIndexShift;
+} EFI_ACPI_6_6_IMSIC_STRUCTURE;
+
+// EFI_ACPI_6_6_IMSIC_STRUCTURE
+#define EFI_ACPI_6_6_IMSIC_STRUCTURE_INIT(NumId, NumGuestId, GuestIndexBits,                         \
+  HartIndexBits, GroupIndexBits, GroupIndexShift) {                                                  \
+    0x19,                                   /* Type */                                               \
+    sizeof (EFI_ACPI_6_6_IMSIC_STRUCTURE),  /* Length */                                             \
+    1,                                      /* Version */                                            \
+    EFI_ACPI_RESERVED_BYTE,                 /* Reserved */                                           \
+    0,                                      /* Flags */                                              \
+    NumId,                                  /* Number of supervisor mode Interrupt Identitieses */   \
+    NumGuestId,                             /* Number of guest mode Interrupt Identities */          \
+    GuestIndexBits,                         /* Guest Index Bits */                                   \
+    HartIndexBits,                          /* Hart Index Bits */                                    \
+    GroupIndexBits,                         /* Group Index Bits */                                   \
+    GroupIndexShift                         /* Group Index Shift */                                  \
   }
 
 #pragma pack(1)
@@ -514,13 +561,13 @@ typedef struct {
     @param [in] Domain              The dependency domain number to which this
                                     P-state entry belongs.
 **/
-#define PSD_INIT(Domain)                                                       \
+#define PSD_INIT(Domain, Processors)                                           \
   {                                                                            \
     5,              /* Entries */                                              \
     0,              /* Revision */                                             \
     Domain,         /* Domain */                                               \
     0xFD,           /* Coord Type- SW_ANY */                                   \
-    1               /* Processors */                                           \
+    Processors      /* Processors */                                           \
   }
 
 #endif /* __SG2044_ACPI_HEADER__ */
