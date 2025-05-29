@@ -54,6 +54,7 @@
   PrintLib|MdePkg/Library/BasePrintLib/BasePrintLib.inf
   VariablePolicyLib|MdeModulePkg/Library/VariablePolicyLib/VariablePolicyLib.inf
   ReportStatusCodeLib|MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf
+  PerformanceLib|MdePkg/Library/BasePerformanceLibNull/BasePerformanceLibNull.inf
 
   #
   # Entry point
@@ -109,7 +110,7 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareSize|0x00004000
   gEfiMdeModulePkgTokenSpaceGuid.PcdVariableStoreSize|0x00004000
 
-  gArmTokenSpaceGuid.PcdFfaLibConduitSmc|FALSE
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFfaLibConduitSmc|FALSE
 
   # The BFV is not located in the Flash area but is loaded in the RAM
   # by optee's stmm_sp.c instead, therefore no shadow copy is needed.
