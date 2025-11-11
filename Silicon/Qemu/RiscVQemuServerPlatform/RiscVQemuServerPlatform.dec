@@ -42,3 +42,6 @@
   gUefiRiscVPlatformPkgTokenSpaceGuid.PcdRvspFlashNvStorageBase|0x22000000|UINT64|0x00000011
 
 [PcdsDynamic.common]
+
+[PcdsFeatureFlag.common]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutUgaSupport|FALSE|BOOLEAN|0x00000012

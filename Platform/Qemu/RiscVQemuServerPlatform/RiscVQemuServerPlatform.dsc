@@ -266,7 +266,7 @@
   #
   # SEC Phase modules
   #
-  OvmfPkg/RiscVVirt/Sec/SecMain.inf {
+  Silicon/Qemu/RiscVQemuServerPlatform/Sec/SecMain.inf {
     <LibraryClasses>
       ExtractGuidedSectionLib|EmbeddedPkg/Library/PrePiExtractGuidedSectionLib/PrePiExtractGuidedSectionLib.inf
       LzmaDecompressLib|MdeModulePkg/Library/LzmaCustomDecompressLib/LzmaCustomDecompressLib.inf
